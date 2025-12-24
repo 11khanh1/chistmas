@@ -125,39 +125,14 @@ const Foliage = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
 
 // --- Component: Photo Ornaments (Double-Sided Polaroid) ---
 const PhotoOrnaments = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
-  const [textures, setTextures] = useState<THREE.Texture[]>([]);
+  const textures = useTexture(CONFIG.photos.body);
   const count = CONFIG.counts.ornaments;
   const groupRef = useRef<THREE.Group>(null);
 
   const borderGeometry = useMemo(() => new THREE.PlaneGeometry(1.2, 1.5), []);
   const photoGeometry = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
 
-  useEffect(() => {
-    let mounted = true;
-    const loader = new THREE.TextureLoader();
-    Promise.all(CONFIG.photos.body.map((path) =>
-      new Promise<THREE.Texture>((resolve) => {
-        loader.load(path,
-          (tex) => resolve(tex),
-          undefined,
-          () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = 128; canvas.height = 128;
-            const ctx = canvas.getContext('2d')!;
-            ctx.fillStyle = '#222'; ctx.fillRect(0,0,128,128);
-            ctx.fillStyle = '#fff'; ctx.font = '16px sans-serif'; ctx.fillText('No Photo', 14, 72);
-            resolve(new THREE.CanvasTexture(canvas));
-          }
-        );
-      })
-    )).then((res) => { if (mounted) setTextures(res); }).catch(() => {
-      if (mounted) setTextures([]);
-    });
-    return () => { mounted = false; };
-  }, []);
-
   const data = useMemo(() => {
-    const texCount = Math.max(1, textures.length);
     return new Array(count).fill(0).map((_, i) => {
       const chaosPos = new THREE.Vector3((Math.random()-0.5)*70, (Math.random()-0.5)*70, (Math.random()-0.5)*70);
       const h = CONFIG.tree.height; const y = (Math.random() * h) - (h / 2);
@@ -180,7 +155,7 @@ const PhotoOrnaments = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
 
       return {
         chaosPos, targetPos, scale: baseScale, weight,
-        textureIndex: i % texCount,
+        textureIndex: i % textures.length,
         borderColor,
         currentPos: chaosPos.clone(),
         chaosRotation,
